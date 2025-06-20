@@ -31,8 +31,8 @@ const getUserById = async (req, res) => {
         const data = {
             name: user.name,
             lastname: user.lastname,
+            email: user.email,
             address: user.address,
-            favorites: user.favorites
         }
 
         return res.status(200).send(data);
@@ -107,15 +107,15 @@ const updatePassword = async (req, res) => {
     const { user_id } = req.user;
     const { password, newPassword } = req.body;
 
-    if (!password) return res.status(400).send({ msg: '❌ Password is required' });
-    if (!newPassword) return res.status(400).send({ msg: '❌ New password is required' });
-    if (newPassword.length < 6) return res.status(400).send({ msg: '❌ New password must be at least 6 characters long' });
+    if (!password) return res.status(400).send({ msg: '❌ La contraseña es requerida' });
+    if (!newPassword) return res.status(400).send({ msg: '❌ No hay nueva contraseña' });
+    if (newPassword.length < 6) return res.status(400).send({ msg: '❌ La nueva contraseña debe tener 6 caracteres o más' });
 
     try {
         const user = await User.findById(user_id);
 
         const isValid = await bcryptjs.compare(password, user.password);
-        if (!isValid) return res.status(400).send({ msg: '❌ Incorrect password' });
+        if (!isValid) return res.status(400).send({ msg: '❌ Contraseña incorrecta' });
 
         await User.findByIdAndUpdate({ _id: user_id }, {password: bcryptjs.hashSync(newPassword, 10)});
 

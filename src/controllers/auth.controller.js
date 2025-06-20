@@ -6,10 +6,10 @@ async function register(req, res) {
     const { name, lastname, email, password } = req.body;
 
     //Validate
-    if (!email) return res.status(400).send({ msg: '❌ Email is required' });
-    if (!/\S+@\S+\.\S+/.test(email)) return res.status(400).send({ msg: '❌ Invalid email address' });
-    if (!password) return res.status(400).send({ msg: '❌ Password is required' });
-    if (password.length < 6) return res.status(400).send({ msg: '❌ Password must be at least 6 characters long' });
+    if (!email) return res.status(400).send({ msg: '❌ El e-mail es obligatorio' });
+    if (!/\S+@\S+\.\S+/.test(email)) return res.status(400).send({ msg: '❌ Dirección de e-mail inválida' });
+    if (!password) return res.status(400).send({ msg: '❌ La contraseña es obligatoria' });
+    if (password.length < 6) return res.status(400).send({ msg: '❌ La contraseña debe tener 6 caracteres o más' });
 
     //Create
     const user = new User({
@@ -41,17 +41,17 @@ async function login(req, res) {
     const { email, password } = req.body;
 
     //Validate
-    if(!email) return res.status(400).send({ msg: '❌ Email is required' });
-    if(!/\S+@\S+\.\S+/.test(email)) return res.status(400).send({ msg: '❌ Invalid email address' });
-    if(!password) return res.status(400).send({ msg: '❌ Password is required' });
-    if(password.length < 6) return res.status(400).send({ msg: '❌ Password must be at least 6 characters long' });
+    if (!email) return res.status(400).send({ msg: '❌ El e-mail es obligatorio' });
+    if (!/\S+@\S+\.\S+/.test(email)) return res.status(400).send({ msg: '❌ Dirección de e-mail inválida' });
+    if (!password) return res.status(400).send({ msg: '❌ La contraseña es obligatoria' });
+    if (password.length < 6) return res.status(400).send({ msg: '❌ La contraseña debe tener 6 caracteres o más' });
 
     try {
         const user = await User.findOne({ email: email.toLowerCase() });
-        if(!user) return res.status(404).send({ msg: '❌ User not found.' });
+        if(!user) return res.status(404).send({ msg: '❌ Usuario no encontrado' });
 
         const isValid = await bcryptjs.compare(password, user.password);
-        if(!isValid) return res.status(400).send({ msg: '❌ Incorrect password' });
+        if(!isValid) return res.status(400).send({ msg: '❌ Contraseña incorrecta' });
 
         const token = jwt.createAccessToken(user);
         res.status(200).send({ token: token });

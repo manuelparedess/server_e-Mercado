@@ -113,7 +113,7 @@ const getMyProducts = async (req, res) => {
 const getRandomProducts = async (req, res) => {
     try {
         const products = await Product.aggregate([
-            { $sample: { size: 20 } }
+            { $sample: { size: 16 } }
         ]);
 
         return res.status(200).json(products);
@@ -126,7 +126,7 @@ const getProductsByCategory = async (req, res) => {
 
     const { category } = req.params;
     const page = parseInt(req.query.page) || 1;
-    const limit = 5;
+    const limit = 6;
     const skip = (page - 1) * limit;
 
     try {
@@ -165,7 +165,7 @@ const getProductsByName = async (req, res) => {
 
     const { name } = req.params;
     const page = parseInt(req.query.page) || 1;
-    const limit = 5;
+    const limit = 6;
     const skip = (page - 1) * limit;
 
     try {
@@ -173,13 +173,18 @@ const getProductsByName = async (req, res) => {
         // Search products by name
         const products = await Product.find({ name: { $regex: name, $options: 'i' } }).skip(skip).limit(limit);
         if (!products.length) {
-            return res.status(404).send({ msg: '❌ No products found' });
+            return res.status(200).send({
+                info: {
+                    count: 0,
+                },
+                results: []
+            });
         }
 
         const total = await Product.countDocuments({ name: { $regex: name, $options: 'i' } });
         const totalPages = Math.ceil(total / limit);
-        const next = page < totalPages ? `http://localhost:5000/api/products/category/${category}?page=${page + 1}` : null;
-        const prev = page > 1 ? `http://localhost:5000/api/products/category/${category}?page=${page - 1}` : null;
+        const next = page < totalPages ? `http://localhost:5000/api/products/name/${name}?page=${page + 1}` : null;
+        const prev = page > 1 ? `http://localhost:5000/api/products/name/${name}?page=${page - 1}` : null;
 
         const response = {
             info: {
@@ -194,7 +199,7 @@ const getProductsByName = async (req, res) => {
         res.status(200).send(response);
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error getting products' + error });
+        res.status(500).send({ msg: '❌ Error getting products'});
 
     }
 
@@ -238,6 +243,7 @@ const addReview = async (req, res) => {
 
         const alreadyReviewed = product.reviews.find((rev) => rev.user === user_id);
         if (alreadyReviewed) return res.status(400).send({ msg: '❌ You already reviewed this product.' }); 
+        if (product.createdBy.user == user_id) return res.status(400).send({ msg: '❌ You cannot review your own product.' }); 
 
         product.reviews.push(newReview);
         await product.save();
