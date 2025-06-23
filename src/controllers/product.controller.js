@@ -24,9 +24,9 @@ const createProduct = async (req, res) => {
 
     try {
         await product.save();
-        res.status(201).send({ msg: '✅ Saved product' });
+        res.status(201).send({ msg: '✅ Producto creado' });
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error creating product' + error });
+        res.status(500).send({ msg: '❌ Error creando producto' });
 
     }
 }
@@ -44,7 +44,12 @@ const getAllProducts = async (req, res) => {
         const products = await Product.find().skip(skip).limit(limit);
 
         if (!products.length) {
-            return res.status(404).send({ msg: '❌ No products found' });
+            return res.status(200).send({
+                info: {
+                    count: 0
+                },
+                results: []
+            });
         }
 
         const total = await Product.countDocuments();
@@ -65,7 +70,7 @@ const getAllProducts = async (req, res) => {
         res.status(200).send(response);
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error getting products' });
+        res.status(500).send({ msg: '❌ Error al obtener los productos' });
 
     }
 }
@@ -109,7 +114,7 @@ const getMyProducts = async (req, res) => {
         res.status(200).send(response);
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error getting products' });
+        res.status(500).send({ msg: '❌ Error al obtener los productos' });
 
     }
 
@@ -123,7 +128,7 @@ const getRandomProducts = async (req, res) => {
 
         return res.status(200).json(products);
     } catch (error) {
-        return res.status(500).json({ msg: '❌ Error getting products' });
+        return res.status(500).json({ msg: '❌ Error al obtener los productos' });
     }
 }
 
@@ -204,7 +209,7 @@ const getProductsByName = async (req, res) => {
         res.status(200).send(response);
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error getting products'});
+        res.status(500).send({ msg: '❌ Error al obtener los productos'});
 
     }
 
@@ -247,15 +252,15 @@ const addReview = async (req, res) => {
         const product = await Product.findById(id);
 
         const alreadyReviewed = product.reviews.find((rev) => rev.user === user_id);
-        if (alreadyReviewed) return res.status(400).send({ msg: '❌ You already reviewed this product.' }); 
-        if (product.createdBy.user == user_id) return res.status(400).send({ msg: '❌ You cannot review your own product.' }); 
+        if (alreadyReviewed) return res.status(400).send({ msg: '❌ Usted ya ha reseñado este producto.' }); 
+        if (product.createdBy.user == user_id) return res.status(400).send({ msg: '❌ No puedes reseñar tu propio producto.' }); 
 
         product.reviews.push(newReview);
         await product.save();
-        res.status(200).send({ msg: '✅ Review sent' });
+        res.status(200).send({ msg: '✅ Reseña enviada' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error sending review' });
+        res.status(500).send({ msg: '❌ Error enviando reseña' });
 
     }
 }
@@ -270,17 +275,17 @@ const updateProduct = async (req, res) => {
     try {
 
         const product = await Product.findById(id); 
-        if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ You are not authorized to modify this product.' });
+        if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ No está autorizado a modificar este producto.' });
 
         if (images.length) {
-            newData.images = [...product.images, ...images]; //Puede pasar a ser que el nuevo array de imagenes sobreescriba al que ya estaba
+            newData.images = [...product.images, ...images]; 
         }
 
         await Product.findByIdAndUpdate({_id: id}, newData);
-        res.status(200).send({msg:'✅ Product updated' });
+        res.status(200).send({msg:'✅ Producto actualizado' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error updating product'});
+        res.status(500).send({ msg: '❌ Error actualizando producto'});
         
     }
 }
@@ -293,10 +298,10 @@ const updateStock = async (req, res) => {
         const product = await Product.findById(id); 
 
         await Product.findByIdAndUpdate({_id: id}, stock);
-        res.status(200).send({msg:'✅ Product stock updated' });
+        res.status(200).send({msg:'✅ Se ha actualizado el stock del producto' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error updating product stock'});
+        res.status(500).send({ msg: '❌ Error actualizando el stock del producto'});
         
     }
 }
@@ -313,10 +318,10 @@ const deleteReview = async (req, res) => {
         product.reviews = product.reviews.filter((rev) => rev.user !== user_id);
 
         await product.save();
-        res.status(200).send({ msg: '✅ Review deleted' });
+        res.status(200).send({ msg: '✅ Reseña eliminada' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error deleting review' });
+        res.status(500).send({ msg: '❌ Error eliminando reseña' });
 
     }
 }
@@ -328,14 +333,14 @@ const deleteProductImage = async (req, res) => {
 
     try {
         const product = await Product.findById(id); 
-        if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ You are not authorized to delete this product.' });
+        if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ No está autorizado a modificar este producto.' });
 
         await Product.findByIdAndUpdate({_id: id}, imagesURL);
 
-        res.status(200).send({ msg: '✅ Product deleted'});
+        res.status(200).send({ msg: '✅ Imagen eliminada'});
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error deleting product' + error });
+        res.status(500).send({ msg: '❌ Error eliminando imagen'});
         
     }
 }
@@ -347,14 +352,14 @@ const deleteProduct = async (req, res) => {
 
     try {
         const product = await Product.findById(id); 
-        if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ You are not authorized to delete this product.' });
+        if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ No está autorizado a eliminar este producto.' });
 
         await Product.findByIdAndDelete(id);
 
-        res.status(200).send({ msg: '✅ Product deleted'});
+        res.status(200).send({ msg: '✅ Producto eliminado'});
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error deleting product' + error });
+        res.status(500).send({ msg: '❌ Error eliminando producto' });
         
     }
 }

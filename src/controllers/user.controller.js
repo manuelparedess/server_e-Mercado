@@ -9,13 +9,13 @@ const getUser = async (req, res) => {
         const user = await User.findById(user_id);
 
         if (!user) {
-            return res.status(404).send({ msg: '❌ User not found' });
+            return res.status(404).send({ msg: '❌ Usuario no encontrado' });
         }
 
         return res.status(200).send(user);
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Invalid user' });
+        res.status(500).send({ msg: '❌ Usuario invalido' });
     }
 }
 
@@ -26,7 +26,7 @@ const getUserById = async (req, res) => {
         const user = await User.findById(id);
 
         if (!user) {
-            return res.status(404).send({ msg: '❌ User not found' });
+            return res.status(404).send({ msg: '❌ Usuario no encontrado' });
         }
 
         const data = {
@@ -40,7 +40,7 @@ const getUserById = async (req, res) => {
         return res.status(200).send(data);
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Invalid user' });
+        res.status(500).send({ msg: '❌ Usuario invalido' });
     }
 }
 
@@ -58,14 +58,14 @@ const addFavorite = async (req, res) => {
         const user = await User.findById(user_id);
 
         const alreadyFavorite = user.favorites.find((fav) => fav.product === id);
-        if (alreadyFavorite) return res.status(400).send({ msg: '❌ This product is already a favorite.' }); 
+        if (alreadyFavorite) return res.status(400).send({ msg: '❌ Este producto ya es favorito.' }); 
 
         user.favorites.push(newFavorite);
         await user.save();
-        res.status(200).send({ msg: '✅ Favorite saved' });
+        res.status(200).send({ msg: '✅ Favorito guardado' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error saving favorite' + error });
+        res.status(500).send({ msg: '❌ Error guardando favorito'});
 
     }
 }
@@ -81,10 +81,10 @@ const deleteFavorite = async (req, res) => {
         user.favorites = user.favorites.filter((fav) => fav.product !== id);
 
         await user.save();
-        res.status(200).send({ msg: '✅ Favorite deleted' });
+        res.status(200).send({ msg: '✅ Favorito eliminado' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error deleting favorite' });
+        res.status(500).send({ msg: '❌ Error eliminando favorito' });
 
     }
 }
@@ -97,10 +97,10 @@ const updateUser = async (req, res) => {
     //Update
     try {
         await User.findByIdAndUpdate({ _id: user_id }, newData);
-        res.status(200).send({ msg: '✅ User updated' });
+        res.status(200).send({ msg: '✅ Usuario actualizado' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error updating user' });
+        res.status(500).send({ msg: '❌ Error actualizando usuario' });
 
     }
 }
@@ -121,10 +121,10 @@ const updatePassword = async (req, res) => {
 
         await User.findByIdAndUpdate({ _id: user_id }, {password: bcryptjs.hashSync(newPassword, 10)});
 
-        res.status(200).send({ msg: '✅ Password updated' });
+        res.status(200).send({ msg: '✅ Contraseña guardada' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error updating password' });
+        res.status(500).send({ msg: '❌ Error cambiando contraseña' });
     }
 }
 
@@ -137,10 +137,10 @@ const deleteUser = async (req, res) => {
         await Product.deleteMany({ createdBy });
         await User.findByIdAndDelete(user_id);
         
-        res.status(200).send({ msg: '✅ User deleted'});
+        res.status(200).send({ msg: '✅ Usuario eliminado'});
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error deleting user' });
+        res.status(500).send({ msg: '❌ Error eliminando usuario' });
         
     }
 }

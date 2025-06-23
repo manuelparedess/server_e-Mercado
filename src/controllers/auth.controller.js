@@ -30,9 +30,9 @@ async function register(req, res) {
     //save in database
     try {
         await user.save();
-        res.status(201).send({ msg: '✅ Registration successful' })
+        res.status(201).send({ msg: '✅ Registro exitoso' })
     } catch (error) {
-        res.status(500).send({ msg: '❌ Registration failed. Please try again' })
+        res.status(500).send({ msg: '❌ Error en el registro. Inténtalo de nuevo.' })
     }
 }
 
@@ -57,7 +57,7 @@ async function login(req, res) {
         res.status(200).send({ token: token });
         
     } catch (error) {
-        res.status(500).send({ msg: '❌ Login failed. Please try again' });
+        res.status(500).send({ msg: '❌ Error al iniciar sesión. Inténtalo de nuevo.' });
     }
 
 }
