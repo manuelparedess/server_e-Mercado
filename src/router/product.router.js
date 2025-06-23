@@ -24,10 +24,12 @@ router.get('/random', ProductController.getRandomProducts);
 router.get('/category/:category', ProductController.getProductsByCategory);
 router.get('/name/:name', ProductController.getProductsByName);
 router.get('/id/:id', ProductController.getProductById);
+router.put('/stock/:id', ProductController.updateStock);
 
 //Private
 router.post('/create', [md_auth.verifyToken], upload.array('image', 5), ProductController.createProduct);
 router.put('/update/:id', [md_auth.verifyToken], upload.array('image', 5), ProductController.updateProduct);
+router.put('/images/:id', [md_auth.verifyToken], ProductController.deleteProductImage);
 router.delete('/delete/:id', [md_auth.verifyToken], ProductController.deleteProduct);
 router.get('/me', [md_auth.verifyToken], ProductController.getMyProducts);
 router.post('/review/:id', [md_auth.verifyToken], ProductController.addReview);

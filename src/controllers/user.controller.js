@@ -1,4 +1,5 @@
 const User = require('../models/user.model');
+const Product = require('../models/product.model');
 const bcryptjs = require('bcryptjs');
 
 const getUser = async (req, res) => {
@@ -29,6 +30,7 @@ const getUserById = async (req, res) => {
         }
 
         const data = {
+            id: user._id,
             name: user.name,
             lastname: user.lastname,
             email: user.email,
@@ -131,6 +133,8 @@ const deleteUser = async (req, res) => {
     const { user_id } = req.user;
 
     try {
+        const createdBy = { user: user_id };
+        await Product.deleteMany({ createdBy });
         await User.findByIdAndDelete(user_id);
         
         res.status(200).send({ msg: '✅ User deleted'});

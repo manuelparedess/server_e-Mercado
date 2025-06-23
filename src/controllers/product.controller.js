@@ -26,7 +26,7 @@ const createProduct = async (req, res) => {
         await product.save();
         res.status(201).send({ msg: '✅ Saved product' });
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error creating product' });
+        res.status(500).send({ msg: '❌ Error creating product' + error });
 
     }
 }
@@ -49,8 +49,8 @@ const getAllProducts = async (req, res) => {
 
         const total = await Product.countDocuments();
         const totalPages = Math.ceil(total / limit);
-        const next = page < totalPages ? `http://localhost:5000/api/products?page=${page + 1}` : null;
-        const prev = page > 1 ? `http://localhost:5000/api/products?page=${page - 1}` : null;
+        const next = page < totalPages ? `http://localhost:5000/api/products/all?page=${page + 1}` : null;
+        const prev = page > 1 ? `http://localhost:5000/api/products/all?page=${page - 1}` : null;
 
         const response = {
             info: {
@@ -74,7 +74,7 @@ const getMyProducts = async (req, res) => {
 
     const { user_id } = req.user;
     const page = parseInt(req.query.page) || 1;
-    const limit = 5;
+    const limit = 6;
     const skip = (page - 1) * limit;
     
     try {
@@ -83,7 +83,12 @@ const getMyProducts = async (req, res) => {
         const createdBy = { user: user_id };
         const products = await Product.find({ createdBy }).skip(skip).limit(limit);
         if (!products.length) {
-            return res.status(404).send({ msg: '❌ No products found' });
+            return res.status(200).send({
+                info: {
+                    count: 0,
+                },
+                results: []
+            });
         }
 
         const total = await Product.countDocuments({ 'createdBy.user': user_id });
@@ -113,7 +118,7 @@ const getMyProducts = async (req, res) => {
 const getRandomProducts = async (req, res) => {
     try {
         const products = await Product.aggregate([
-            { $sample: { size: 16 } }
+            { $sample: { size: 12 } }
         ]);
 
         return res.status(200).json(products);
@@ -280,6 +285,22 @@ const updateProduct = async (req, res) => {
     }
 }
 
+const updateStock = async (req, res) => {
+    const { id } = req.params;
+    const stock = req.body;
+
+    try {
+        const product = await Product.findById(id); 
+
+        await Product.findByIdAndUpdate({_id: id}, stock);
+        res.status(200).send({msg:'✅ Product stock updated' });
+
+    } catch (error) {
+        res.status(500).send({ msg: '❌ Error updating product stock'});
+        
+    }
+}
+
 //Delete
 const deleteReview = async (req, res) => {
 
@@ -300,12 +321,31 @@ const deleteReview = async (req, res) => {
     }
 }
 
+const deleteProductImage = async (req, res) => {
+    const { user_id } = req.user;
+    const { id } = req.params;
+    const imagesURL = req.body;
+
+    try {
+        const product = await Product.findById(id); 
+        if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ You are not authorized to delete this product.' });
+
+        await Product.findByIdAndUpdate({_id: id}, imagesURL);
+
+        res.status(200).send({ msg: '✅ Product deleted'});
+
+    } catch (error) {
+        res.status(500).send({ msg: '❌ Error deleting product' + error });
+        
+    }
+}
+
+
 const deleteProduct = async (req, res) => {
     const { user_id } = req.user;
     const { id } = req.params;
 
     try {
-
         const product = await Product.findById(id); 
         if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ You are not authorized to delete this product.' });
 
@@ -314,7 +354,7 @@ const deleteProduct = async (req, res) => {
         res.status(200).send({ msg: '✅ Product deleted'});
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error deleting product' });
+        res.status(500).send({ msg: '❌ Error deleting product' + error });
         
     }
 }
@@ -330,6 +370,8 @@ module.exports = {
     getProductById,
     addReview,
     updateProduct,
+    updateStock,
     deleteReview,
+    deleteProductImage,
     deleteProduct
 }
