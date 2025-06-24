@@ -2,7 +2,7 @@ const User = require('../models/user.model');
 const bcryptjs = require('bcryptjs');
 const jwt = require('../utils/jwt.js');
 
-async function register(req, res) { 
+async function register(req, res) {
     const { name, lastname, email, password } = req.body;
 
     //Validate
@@ -36,7 +36,7 @@ async function register(req, res) {
     }
 }
 
-async function login(req, res) { 
+async function login(req, res) {
 
     const { email, password } = req.body;
 
@@ -48,14 +48,45 @@ async function login(req, res) {
 
     try {
         const user = await User.findOne({ email: email.toLowerCase() });
-        if(!user) return res.status(404).send({ msg: '❌ Usuario no encontrado' });
+        if (!user) return res.status(404).send({ msg: '❌ Usuario no encontrado' });
 
         const isValid = await bcryptjs.compare(password, user.password);
-        if(!isValid) return res.status(400).send({ msg: '❌ Contraseña incorrecta' });
+        if (!isValid) return res.status(400).send({ msg: '❌ Contraseña incorrecta' });
 
         const token = jwt.createAccessToken(user);
         res.status(200).send({ token: token });
-        
+
+    } catch (error) {
+        res.status(500).send({ msg: '❌ Error al iniciar sesión. Inténtalo de nuevo.' });
+    }
+
+}
+
+async function loginWithGoogle(req, res) {
+
+    const { email, given_name, family_name } = req.user;
+    try {
+
+        let user = await User.findOne({ email });
+        if (!user) {
+            user = new User({
+                name: given_name,
+                lastname: family_name,
+                email,
+                password: 'google_auth',
+                address: {
+                    street: '',
+                    city: '',
+                    country: ''
+                },
+                favorites: []
+            });
+            await user.save();
+        }
+
+        const token = jwt.createAccessToken(user);
+        res.status(200).send({ token: token });
+
     } catch (error) {
         res.status(500).send({ msg: '❌ Error al iniciar sesión. Inténtalo de nuevo.' });
     }
@@ -65,5 +96,6 @@ async function login(req, res) {
 
 module.exports = {
     register,
-    login
+    login,
+    loginWithGoogle
 }
