@@ -1,4 +1,6 @@
 const Product = require('../models/product.model');
+const cloudinary = require('../../config/cloudinary');
+const fs = require('fs');
 
 //Create
 const createProduct = async (req, res) => {
@@ -8,7 +10,22 @@ const createProduct = async (req, res) => {
 
     //product
     const { name, description, price, category, stock } = req.body;
-    const images = req.files.map(file => `/uploads/${file.filename}`);
+
+    //images
+    const images = await Promise.all(
+        req.files.map((file) => {
+            return new Promise((resolve, reject) => {
+                cloudinary.uploader.upload(file.path, {
+                    folder: 'e-Mercado',
+                }, (err, result) => {
+                    fs.unlinkSync(file.path); // Delete the local file from the disk
+                    if (err) return reject(err);
+                    resolve(result.secure_url); // Return Cloudinary URL
+                });
+            });
+        })
+    );
+    
     const product = new Product({
         name,
         description,
@@ -81,9 +98,9 @@ const getMyProducts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 6;
     const skip = (page - 1) * limit;
-    
+
     try {
-        
+
         // Search products by user id
         const createdBy = { user: user_id };
         const products = await Product.find({ createdBy }).skip(skip).limit(limit);
@@ -209,7 +226,7 @@ const getProductsByName = async (req, res) => {
         res.status(200).send(response);
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error al obtener los productos'});
+        res.status(500).send({ msg: '❌ Error al obtener los productos' });
 
     }
 
@@ -252,8 +269,8 @@ const addReview = async (req, res) => {
         const product = await Product.findById(id);
 
         const alreadyReviewed = product.reviews.find((rev) => rev.user === user_id);
-        if (alreadyReviewed) return res.status(400).send({ msg: '❌ Usted ya ha reseñado este producto.' }); 
-        if (product.createdBy.user == user_id) return res.status(400).send({ msg: '❌ No puedes reseñar tu propio producto.' }); 
+        if (alreadyReviewed) return res.status(400).send({ msg: '❌ Usted ya ha reseñado este producto.' });
+        if (product.createdBy.user == user_id) return res.status(400).send({ msg: '❌ No puedes reseñar tu propio producto.' });
 
         product.reviews.push(newReview);
         await product.save();
@@ -270,23 +287,35 @@ const updateProduct = async (req, res) => {
     const { user_id } = req.user;
     const { id } = req.params;
     const newData = req.body;
-    const images = req.files.map(file => `/uploads/${file.filename}`) || [];
+    const images = await Promise.all(
+        req.files.map((file) => {
+            return new Promise((resolve, reject) => {
+                cloudinary.uploader.upload(file.path, {
+                    folder: 'e-Mercado',
+                }, (err, result) => {
+                    fs.unlinkSync(file.path); // Delete the local file from the disk
+                    if (err) return reject(err);
+                    resolve(result.secure_url); // Return Cloudinary URL
+                });
+            });
+        })
+    );
 
     try {
 
-        const product = await Product.findById(id); 
-        if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ No está autorizado a modificar este producto.' });
+        const product = await Product.findById(id);
+        if (product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ No está autorizado a modificar este producto.' });
 
         if (images.length) {
-            newData.images = [...product.images, ...images]; 
+            newData.images = [...product.images, ...images];
         }
 
-        await Product.findByIdAndUpdate({_id: id}, newData);
-        res.status(200).send({msg:'✅ Producto actualizado' });
+        await Product.findByIdAndUpdate({ _id: id }, newData);
+        res.status(200).send({ msg: '✅ Producto actualizado' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error actualizando producto'});
-        
+        res.status(500).send({ msg: '❌ Error actualizando producto' });
+
     }
 }
 
@@ -295,14 +324,14 @@ const updateStock = async (req, res) => {
     const stock = req.body;
 
     try {
-        const product = await Product.findById(id); 
+        const product = await Product.findById(id);
 
-        await Product.findByIdAndUpdate({_id: id}, stock);
-        res.status(200).send({msg:'✅ Se ha actualizado el stock del producto' });
+        await Product.findByIdAndUpdate({ _id: id }, stock);
+        res.status(200).send({ msg: '✅ Se ha actualizado el stock del producto' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error actualizando el stock del producto'});
-        
+        res.status(500).send({ msg: '❌ Error actualizando el stock del producto' });
+
     }
 }
 
@@ -332,16 +361,16 @@ const deleteProductImage = async (req, res) => {
     const imagesURL = req.body;
 
     try {
-        const product = await Product.findById(id); 
-        if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ No está autorizado a modificar este producto.' });
+        const product = await Product.findById(id);
+        if (product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ No está autorizado a modificar este producto.' });
 
-        await Product.findByIdAndUpdate({_id: id}, imagesURL);
+        await Product.findByIdAndUpdate({ _id: id }, imagesURL);
 
-        res.status(200).send({ msg: '✅ Imagen eliminada'});
+        res.status(200).send({ msg: '✅ Imagen eliminada' });
 
     } catch (error) {
-        res.status(500).send({ msg: '❌ Error eliminando imagen'});
-        
+        res.status(500).send({ msg: '❌ Error eliminando imagen' });
+
     }
 }
 
@@ -351,16 +380,16 @@ const deleteProduct = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const product = await Product.findById(id); 
-        if(product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ No está autorizado a eliminar este producto.' });
+        const product = await Product.findById(id);
+        if (product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ No está autorizado a eliminar este producto.' });
 
         await Product.findByIdAndDelete(id);
 
-        res.status(200).send({ msg: '✅ Producto eliminado'});
+        res.status(200).send({ msg: '✅ Producto eliminado' });
 
     } catch (error) {
         res.status(500).send({ msg: '❌ Error eliminando producto' });
-        
+
     }
 }
 
