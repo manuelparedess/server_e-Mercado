@@ -11,37 +11,49 @@ const createProduct = async (req, res) => {
     //product
     const { name, description, price, category, stock } = req.body;
 
-    //images
-    const images = await Promise.all(
-        req.files.map((file) => {
-            return new Promise((resolve, reject) => {
-                cloudinary.uploader.upload(file.path, {
-                    folder: 'e-Mercado',
-                }, (err, result) => {
-                    fs.unlinkSync(file.path); // Delete the local file from the disk
-                    if (err) return reject(err);
-                    resolve(result.secure_url); // Return Cloudinary URL
-                });
-            });
-        })
-    );
     
-    const product = new Product({
-        name,
-        description,
-        price,
-        category,
-        stock,
-        images,
-        reviews: [],
-        createdBy: {
-            user: user_id,
-        },
-    });
-
     try {
+        //images
+        const images = await Promise.all(
+            req.files.map((file) => {
+                return new Promise((resolve, reject) => {
+                    cloudinary.uploader.upload(file.path, {
+                        folder: 'e-Mercado',
+                    }, (err, result) => {
+                        if (err) return reject(err);
+                        resolve(result.secure_url); // Return Cloudinary URL
+                    });
+                });
+            })
+        );
+
+        // Delete the local file from the disk
+        for (const file of req.files) {
+            try {
+                if (fs.existsSync(file.path)) {
+                    fs.unlinkSync(file.path);
+                }
+            } catch (err) {
+                console.warn('⚠️ No se pudo borrar el archivo local:', file.path);
+            }
+        }
+        
+        const product = new Product({
+            name,
+            description,
+            price,
+            category,
+            stock,
+            images,
+            reviews: [],
+            createdBy: {
+                user: user_id,
+            },
+        });
+
         await product.save();
         res.status(201).send({ msg: '✅ Producto creado' });
+        
     } catch (error) {
         res.status(500).send({ msg: '❌ Error creando producto' });
 
@@ -287,21 +299,31 @@ const updateProduct = async (req, res) => {
     const { user_id } = req.user;
     const { id } = req.params;
     const newData = req.body;
-    const images = await Promise.all(
-        req.files.map((file) => {
-            return new Promise((resolve, reject) => {
-                cloudinary.uploader.upload(file.path, {
-                    folder: 'e-Mercado',
-                }, (err, result) => {
-                    fs.unlinkSync(file.path); // Delete the local file from the disk
-                    if (err) return reject(err);
-                    resolve(result.secure_url); // Return Cloudinary URL
-                });
-            });
-        })
-    );
-
+    
     try {
+        const images = await Promise.all(
+            req.files.map((file) => {
+                return new Promise((resolve, reject) => {
+                    cloudinary.uploader.upload(file.path, {
+                        folder: 'e-Mercado',
+                    }, (err, result) => {
+                        if (err) return reject(err);
+                        resolve(result.secure_url); // Return Cloudinary URL
+                    });
+                });
+            })
+        );
+
+        // Delete the local file from the disk
+        for (const file of req.files) {
+            try {
+                if (fs.existsSync(file.path)) {
+                    fs.unlinkSync(file.path);
+                }
+            } catch (err) {
+                console.warn('⚠️ No se pudo borrar el archivo local:', file.path);
+            }
+        }
 
         const product = await Product.findById(id);
         if (product.createdBy.user != user_id) return res.status(400).send({ msg: '❌ No está autorizado a modificar este producto.' });
